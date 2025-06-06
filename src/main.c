@@ -6,8 +6,22 @@
 #define bufsize 4096
 unsigned char buf[bufsize];
 
-const char* strfind = "This program requires a 68881 or higher";
-const char* strmark = "This is insane...       ";
+#define strsize 38
+const unsigned char strfind[strsize] = {
+	// pea $2AE(pc)
+	// bra $316
+    0x48,0x7A,0x00,0x06,0x60,0x00,0x00,0x6A,
+    // This program requires a 68881
+    0x54,0x68,0x69,0x73,0x20,0x70,0x72,0x6F,0x67,0x72,0x61,0x6D,0x20,
+    0x72,0x65,0x71,0x75,0x69,0x72,0x65,0x73,0x20,
+    0x61,0x20,0x36,0x38,0x38,0x38,0x31,0x20 };
+
+const unsigned char strmark[strsize] = {
+    // rts, rts, rts, rts
+    0x4E,0x75,0x4E,0x75,0x4E,0x75,0x4E,0x75,
+    0x54,0x68,0x69,0x73,0x20,0x69,0x73,0x20,0x69,0x6E,0x73,0x61,0x6E,
+    0x65,0x2E,0x2E,0x2E,0x20,0x20,0x20,0x20,0x20,
+    0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20 };
 
 long fixit(const char* filename) {
 
@@ -19,19 +33,12 @@ long fixit(const char* filename) {
         fseek(f, 0, SEEK_SET);
         memset(buf, 0, bufsize);
         fread(buf, 1, bufsize, f);
-        int findlen = strlen(strfind);
-        for (int pos=8; pos<(bufsize-findlen-1); pos++) {
-            if (memcmp(strfind, &buf[pos], findlen) == 0) {
+        for (int pos=0; pos<(bufsize-strsize); pos++) {
+            if (memcmp(strfind, &buf[pos], strsize) == 0) {
                 // get rid of the nonsense
                 fseek(f, 0, SEEK_CUR);
-                fseek(f, pos-8, SEEK_SET);
-                fputc(0x4E, f); fputc(0x75, f); // rts
-                fputc(0x4E, f); fputc(0x75, f); // rts
-                fputc(0x4E, f); fputc(0x75, f); // rts
-                fputc(0x4E, f); fputc(0x75, f); // rts
-                fflush(f);
-                // and mark so patcher wont detect again
-                for (int i=0; i<strlen(strmark); i++) {
+                fseek(f, pos, SEEK_SET);
+                for (int i=0; i<strsize; i++) {
                     fputc(strmark[i], f);
                 }
                 fflush(f);
