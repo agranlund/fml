@@ -21,12 +21,11 @@ long fixit(const char* filename) {
     // open for read/write
     FILE* f = fopen(filename, "rb+");
     if (f) {
-        // we expect mintlib detection somewhere at
-        // the start of the file
+        // find filesize
         fseek(f, 0, SEEK_END);
         long fsize = ftell(f);
         fseek(f, 0, SEEK_SET);
-
+        // look for code to patch away
         memset(buf, 0, bufsize*2);
         for (long fpos = 0; fpos < fsize; fpos += bufsize)
         {
