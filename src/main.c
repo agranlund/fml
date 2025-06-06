@@ -3,9 +3,6 @@
 #include <stdbool.h>
 #include <string.h>
 
-#define bufsize 4096
-unsigned char buf[bufsize];
-
 #define strsize 38
 const unsigned char strfind[strsize] = {
 	// pea $2AE(pc)
@@ -16,6 +13,9 @@ const unsigned char strfind[strsize] = {
     0x72,0x65,0x71,0x75,0x69,0x72,0x65,0x73,0x20,
     0x61,0x20,0x36,0x38,0x38,0x38,0x31,0x20 };
 
+#define bufsize (strsize*2)
+unsigned char buf[bufsize*2];
+
 long fixit(const char* filename) {
 
     // open for read/write
@@ -23,21 +23,28 @@ long fixit(const char* filename) {
     if (f) {
         // we expect mintlib detection somewhere at
         // the start of the file
+        fseek(f, 0, SEEK_END);
+        long fsize = ftell(f);
         fseek(f, 0, SEEK_SET);
-        memset(buf, 0, bufsize);
-        fread(buf, 1, bufsize, f);
-        for (int pos=0; pos<(bufsize-strsize); pos++) {
-            if (memcmp(strfind, &buf[pos], strsize) == 0) {
-                // get rid of the nonsense
-                fseek(f, 0, SEEK_CUR);
-                fseek(f, pos, SEEK_SET);
-                fputc(0x4E, f); fputc(0x75, f); // rts
-                fputc(0x4E, f); fputc(0x75, f); // rts
-                fputc(0x4E, f); fputc(0x75, f); // rts
-                fputc(0x4E, f); fputc(0x75, f); // rts
-                fflush(f);
-                fclose(f);
-                return pos;
+
+        memset(buf, 0, bufsize*2);
+        for (long fpos = 0; fpos < fsize; fpos += bufsize)
+        {
+            memcpy(&buf[0], &buf[bufsize], bufsize);
+            fread(&buf[bufsize], 1, bufsize, f);
+            for (int pos=0; pos<((bufsize*2)-strsize); pos++) {
+                if (memcmp(strfind, &buf[pos], strsize) == 0) {
+                    // get rid of the nonsense
+                    fseek(f, 0, SEEK_CUR);
+                    fseek(f, pos, SEEK_SET);
+                    fputc(0x4E, f); fputc(0x75, f); // rts
+                    fputc(0x4E, f); fputc(0x75, f); // rts
+                    fputc(0x4E, f); fputc(0x75, f); // rts
+                    fputc(0x4E, f); fputc(0x75, f); // rts
+                    fflush(f);
+                    fclose(f);
+                    return (fpos+pos);
+                }
             }
         }
         fclose(f);
