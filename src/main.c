@@ -16,13 +16,6 @@ const unsigned char strfind[strsize] = {
     0x72,0x65,0x71,0x75,0x69,0x72,0x65,0x73,0x20,
     0x61,0x20,0x36,0x38,0x38,0x38,0x31,0x20 };
 
-const unsigned char strmark[strsize] = {
-    // rts, rts, rts, rts
-    0x4E,0x75,0x4E,0x75,0x4E,0x75,0x4E,0x75,
-    0x54,0x68,0x69,0x73,0x20,0x69,0x73,0x20,0x69,0x6E,0x73,0x61,0x6E,
-    0x65,0x2E,0x2E,0x2E,0x20,0x20,0x20,0x20,0x20,
-    0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20 };
-
 long fixit(const char* filename) {
 
     // open for read/write
@@ -38,9 +31,10 @@ long fixit(const char* filename) {
                 // get rid of the nonsense
                 fseek(f, 0, SEEK_CUR);
                 fseek(f, pos, SEEK_SET);
-                for (int i=0; i<strsize; i++) {
-                    fputc(strmark[i], f);
-                }
+                fputc(0x4E, f); fputc(0x75, f); // rts
+                fputc(0x4E, f); fputc(0x75, f); // rts
+                fputc(0x4E, f); fputc(0x75, f); // rts
+                fputc(0x4E, f); fputc(0x75, f); // rts
                 fflush(f);
                 fclose(f);
                 return pos;
@@ -58,7 +52,8 @@ int main(int args, char* argv[]) {
         return 0;
     }
 
-    // todo: add some option to recursively patch all files
+    // todo: add some option to batch patch all files recursively
+
     const char* filename = argv[1];
     long pos = fixit(filename);
     if (pos > 0) {
